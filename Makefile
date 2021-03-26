@@ -1,4 +1,4 @@
-TARGET_EXEC ?= trab1
+TARGET_EXEC ?= vsh
 
 BUILD_DIR ?= .
 SRC_DIRS ?= ./src ./lib
