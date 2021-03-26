@@ -32,4 +32,6 @@ typedef struct commandLine_t {
     unsigned int commandc;
 } commandLine_t;
 
+commandLine_t* parseLine();
+
 #endif

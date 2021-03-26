@@ -6,6 +6,7 @@ command_t* initCommand() {
         perror("Erro allocating new command_t");
         exit(EXIT_FAILURE);
     }
+    newCommand->argc = 0;
     return newCommand;
 }
 
@@ -19,7 +20,10 @@ commandLine_t* initCommandLine() {
     return newCommandLine;
 }
 
-char* copyStr(char* src) {
+char* copyStr(const char* src) {
+    if (src == NULL) {
+        return NULL;
+    }
     char* dest = (char*)malloc(sizeof(char) * (strlen(src) + 1));
     if (dest == NULL) {
         perror("Erro allocating string for copying");
@@ -36,8 +40,8 @@ command_t* parseCommand(char* fullCommand) {
 
     command->commandName = copyStr(strtok(fullCommand, ARGS_DELIM));
     char* currentArg;
-    for (int i = 0, currentArg = strtok(NULL, ARGS_DELIM); i < MAX_ARGUMENTS || currentArg == NULL; currentArg = strtok(NULL, ARGS_DELIM)) {
-        command->argument[i] = copyStr(currentArg);
+    for (currentArg = strtok(NULL, ARGS_DELIM); currentArg != NULL; currentArg = strtok(NULL, ARGS_DELIM)) {
+        command->argument[command->argc++] = copyStr(currentArg);
     }
 
     return command;
@@ -46,12 +50,16 @@ command_t* parseCommand(char* fullCommand) {
 // Waits and parses line from stdin
 commandLine_t* parseLine() {
     char wholeLine[BUFFERSIZE];
-    scanf("%s", wholeLine);
+    if (scanf("%s", wholeLine) < 1) {
+        perror("Erro scanning stdin.");
+        exit(EXIT_FAILURE);
+    };
 
     commandLine_t* commandLine = initCommandLine();
 
-    char* command;
-    for (int i = 0, command = strtok(wholeLine, COMMAND_DELIM); i < MAX_COMMANDS && command != NULL; i++, command = strtok(NULL, COMMAND_DELIM)) {
+
+    for (char* command = strtok(wholeLine, COMMAND_DELIM); command != NULL; command = strtok(NULL, COMMAND_DELIM)) {
+        printf("Tentando parsear comando %s\n", command);
         commandLine->command[commandLine->commandc++] = parseCommand(command);
     }
 
