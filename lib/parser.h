@@ -12,7 +12,7 @@
 // Declared in assignment's specification
 #define MAX_COMMANDS (5)
 #define MAX_ARGUMENTS (3)
-#define COMMAND_DELIM (" | ")
+#define COMMAND_DELIM ("|")
 #define ARGS_DELIM (" ")
 
 #define BUFFERSIZE (1000)

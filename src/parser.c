@@ -49,19 +49,21 @@ command_t* parseCommand(char* fullCommand) {
 
 // Waits and parses line from stdin
 commandLine_t* parseLine() {
-    char wholeLine[BUFFERSIZE];
-    if (scanf("%s", wholeLine) < 1) {
+    char *wholeLine = malloc(sizeof(char) * BUFFERSIZE);
+    char *wholeLineBkp = wholeLine;
+    if (scanf("%[^\n]%*c", wholeLine) < 1) {
         perror("Erro scanning stdin.");
         exit(EXIT_FAILURE);
     };
 
     commandLine_t* commandLine = initCommandLine();
 
-
-    for (char* command = strtok(wholeLine, COMMAND_DELIM); command != NULL; command = strtok(NULL, COMMAND_DELIM)) {
+    for (char* command = strsep(&wholeLine, COMMAND_DELIM); command != NULL; command = strsep(&wholeLine, COMMAND_DELIM)) {
         printf("Tentando parsear comando %s\n", command);
         commandLine->command[commandLine->commandc++] = parseCommand(command);
     }
 
+    wholeLine = wholeLineBkp;
+    free(wholeLine);
     return commandLine;
 }
