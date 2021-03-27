@@ -30,4 +30,8 @@ typedef struct commandLine_t {
 
 commandLine_t* parseLine();
 
+void freeCommand(command_t *c);
+
+void freeCommandLine(commandLine_t *cl);
+
 #endif

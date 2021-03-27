@@ -3,6 +3,21 @@
 #include <string.h>
 #include "../lib/parser.h"
 
+void freeCommand(command_t *c){
+    free(c->commandName);
+    for (int i = 0; i < c->argc; i++){
+        free(c->argument[i]);
+    }
+    free(c);
+}
+
+void freeCommandLine(commandLine_t *cl){
+    for (int i = 0; i < cl->commandc; i++){
+        freeCommand(cl->command[i]);
+    }
+    free(cl);
+}
+
 int lineChecker(char *line, char delim, int max){
     int c = 0;
     for (int i = 0; i < BUFFERSIZE; i++){
