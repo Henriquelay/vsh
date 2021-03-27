@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../lib/parser.h"
 
 int lineChecker(char *line, char delim, int max){

@@ -5,10 +5,6 @@
 #ifndef _VSH_PARSER_H_
 #define _VSH_PARSER_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 // Declared in assignment's specification
 #define MAX_COMMANDS (5)
 #define MAX_ARGUMENTS (3)

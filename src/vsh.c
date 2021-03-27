@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "../lib/parser.h"
 
 int main(int argc, char* argv[]) {
