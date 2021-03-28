@@ -5,7 +5,8 @@
 
 void freeCommand(command_t *c){
     free(c->commandName);
-    for (int i = 0; i < c->argc; i++){
+    c->argument[0] = NULL;
+    for (int i = 1; i <= c->argc; i++){
         free(c->argument[i]);
     }
     free(c);
@@ -78,9 +79,10 @@ command_t* parseCommand(char* fullCommand) {
         printf("Too many arguments! Max: %d\n", MAX_ARGUMENTS);
     }else{
         command->commandName = copyStr(strtok(fullCommand, ARGS_DELIM));
+        command->argument[0] = command->commandName;
         char* currentArg;
         for (currentArg = strtok(NULL, ARGS_DELIM); currentArg != NULL; currentArg = strtok(NULL, ARGS_DELIM)) {
-            command->argument[command->argc++] = copyStr(currentArg);
+            command->argument[(command->argc++) + 1] = copyStr(currentArg);
         }
     }
 
@@ -103,7 +105,7 @@ commandLine_t* parseLine() {
         printf("Too many commands! Max: %d\n", MAX_COMMANDS);
     }else{
         for (char* command = strsep(&wholeLine, COMMAND_DELIM); command != NULL; command = strsep(&wholeLine, COMMAND_DELIM)) {
-            printf("Tentando parsear comando %s\n", command);
+            // printf("Tentando parsear comando %s\n", command);
             commandLine->command[commandLine->commandc++] = parseCommand(command);
         }
     }

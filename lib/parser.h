@@ -16,7 +16,7 @@
 // Defines a whole command or shell instruction, including arguments
 typedef struct command_t {
     char* commandName;
-    char* argument[MAX_ARGUMENTS];
+    char* argument[MAX_ARGUMENTS+1];
     // The number of arguments used
     unsigned int argc;
 } command_t;
