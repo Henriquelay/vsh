@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "../lib/parser.h"
+#include "../lib/handlerSignal.h"
 
 void freeCommand(command_t *c){
     free(c->commandName);
@@ -92,6 +93,7 @@ command_t* parseCommand(char* fullCommand) {
 // Waits and parses line from stdin
 commandLine_t* parseLine() {
     // vai precisar tratar sinal pra liberar wholeLine quando o programa for morto (ctrl c, kill, etc...)
+    signal(SIGINT, sig_handler);
     char *wholeLine = malloc(sizeof(char) * BUFFERSIZE);
     // backup da referencia inicial pois strsep() modifica a referencia inicial
     char *wholeLineBkp = wholeLine;
