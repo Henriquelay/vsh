@@ -8,6 +8,7 @@ int main(int argc, char* argv[]) {
         commandLine_t* commandLine = parseLine();
 
         execCommandLine(commandLine);
+        commandLine = NULL;
     }
     return 0;
 }

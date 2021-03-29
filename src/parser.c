@@ -5,9 +5,11 @@
 
 void freeCommand(command_t *c){
     free(c->commandName);
+    c->commandName = NULL;
     c->argument[0] = NULL;
     for (int i = 1; i <= c->argc; i++){
         free(c->argument[i]);
+        c->argument[i] = NULL;
     }
     free(c);
 }
@@ -15,6 +17,7 @@ void freeCommand(command_t *c){
 void freeCommandLine(commandLine_t *cl){
     for (int i = 0; i < cl->commandc; i++){
         freeCommand(cl->command[i]);
+        cl->command[i] = NULL;
     }
     free(cl);
 }
