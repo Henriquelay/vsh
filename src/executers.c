@@ -87,6 +87,9 @@ int execSingle(command_t *command){
     }    
 }
 
+
+// write do child vai no read do parent (usando o pipe child_to_parent)
+// write do parent vai no read do child (usando o pipe parent_to_child)
 int execPiped(commandLine_t *commands){
 
     int child_to_parent[2];
@@ -102,7 +105,7 @@ int execPiped(commandLine_t *commands){
         exit(1);
     }
 
-    pid_t *pids = malloc(sizeof(pid_t)*commands->commandc);
+    pid_t pids[commands->commandc];
 
     for(int i=0; i<commands->commandc; i++){
 
@@ -119,42 +122,57 @@ int execPiped(commandLine_t *commands){
                     return 1;
                 
                 }
+
+                close(parent_to_child[1]);
                 if(i != 0){
-                    close(parent_to_child[1]);
                     dup2(parent_to_child[0], STDIN_FILENO);
-                    close(parent_to_child[0]);
-
                 }
+                close(parent_to_child[0]);
 
+
+                close(child_to_parent[0]);
                 if ((i+1) != commands->commandc){
-                    close(child_to_parent[0]);
                     dup2(child_to_parent[1], STDOUT_FILENO);
-                    close(child_to_parent[1]);
                 }
+                close(child_to_parent[1]);
 
                 if(execvp(currentCmd->commandName, currentCmd->argument) < 0){
                     printf("\nCould not execute command: %s", currentCmd->commandName);
                 }
 
             }else{
-                // parent code
+                char buffer[BUFFERSIZE];
+                int returnValue = 0;
+
+                if((i+1) != commands->commandc){
+                    returnValue = read(child_to_parent[0], &buffer, BUFFERSIZE);
+                    if(returnValue < 0){
+                        printf("\nFail to read");
+                    }
+                    returnValue = write(parent_to_child[1], &buffer, strlen(buffer));
+                    if(returnValue < 0){
+                        printf("\nFail to write");
+                    }
+                }
+                /* 
+                # TODO
+                Testando com o comando "ls -la | grep vsh": 
+                - O "ls -la" executa
+                - o pai recebe a saída de "ls -la"
+                - repassa a saída pro "grep vsh"
+                - o "grep vsh" recebe a entrada repassada e printa o resultado no STDOUT do programa
+                - porém "grep vsh" fica como stopped e não morre, travando o programa
+                - waitpid(pids[i], NULL, WNOHANG); "resolve" o problema de travamento, porém, ocorre o seguinte:
+                    \_ ./vsh
+                        \_ [ls] <defunct>
+                        \_ grep vsh
+                */
+                waitpid(pids[i], NULL, WNOHANG); 
             }
         }
     }
 
-    if(pids[0] > 0){
-        char buffer[BUFFERSIZE];
-        int returnValue = 0;
 
-        returnValue = read(child_to_parent[0], &buffer, BUFFERSIZE);
-        if(returnValue < 0){
-            printf("\nFail to read");
-        }
-        returnValue = write(parent_to_child[1], &buffer, strlen(buffer));
-        if(returnValue < 0){
-            printf("\nFail to write");
-        }    
-    }
 
     return 0;   
 }
