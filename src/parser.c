@@ -82,7 +82,7 @@ commandLine_t* parseLine() {
     char wholeLine[BUFFERSIZE];
 
 
-    printf("\nvsh> ");
+    printf("\n$vsh> ");
     if (scanf("%[^\n]%*c", wholeLine) == EOF) {
         perror("Finished reading from stdin");
         exit(EXIT_FAILURE);
