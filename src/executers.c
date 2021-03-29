@@ -82,7 +82,7 @@ int execSingle(command_t *command){
         }
         exit(0);
     }else{
-        wait(NULL);
+        waitpid(pid, NULL, 0);
         return 0;
     }    
 }
