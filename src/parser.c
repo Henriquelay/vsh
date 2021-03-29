@@ -1,4 +1,44 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../lib/parser.h"
+
+void freeCommand(command_t *c){
+    free(c->commandName);
+    c->commandName = NULL;
+    c->argument[0] = NULL;
+    for (int i = 1; i <= c->argc; i++){
+        free(c->argument[i]);
+        c->argument[i] = NULL;
+    }
+    free(c);
+}
+
+void freeCommandLine(commandLine_t *cl){
+    for (int i = 0; i < cl->commandc; i++){
+        freeCommand(cl->command[i]);
+        cl->command[i] = NULL;
+    }
+    free(cl);
+}
+
+int lineChecker(char *line, char delim, int max){
+    int c = 0;
+    for (int i = 0; i < BUFFERSIZE; i++){
+        if(line[i] == '\0'){
+            break;
+        }
+        if(line[i] == delim){
+            if(i != 0){
+                c++;
+            }
+        }
+        if(c >= max){
+            return 0;
+        }
+    }
+    return 1;
+}
 
 command_t* initCommand() {
     command_t* newCommand = (command_t*)malloc(sizeof(command_t));
@@ -38,10 +78,15 @@ char* copyStr(const char* src) {
 command_t* parseCommand(char* fullCommand) {
     command_t* command = initCommand();
 
-    command->commandName = copyStr(strtok(fullCommand, ARGS_DELIM));
-    char* currentArg;
-    for (currentArg = strtok(NULL, ARGS_DELIM); currentArg != NULL; currentArg = strtok(NULL, ARGS_DELIM)) {
-        command->argument[command->argc++] = copyStr(currentArg);
+    if(!lineChecker(fullCommand, ' ', MAX_ARGUMENTS)){
+        printf("Too many arguments! Max: %d\n", MAX_ARGUMENTS);
+    }else{
+        command->commandName = copyStr(strtok(fullCommand, ARGS_DELIM));
+        command->argument[0] = command->commandName;
+        char* currentArg;
+        for (currentArg = strtok(NULL, ARGS_DELIM); currentArg != NULL; currentArg = strtok(NULL, ARGS_DELIM)) {
+            command->argument[(command->argc++) + 1] = copyStr(currentArg);
+        }
     }
 
     return command;
@@ -49,19 +94,27 @@ command_t* parseCommand(char* fullCommand) {
 
 // Waits and parses line from stdin
 commandLine_t* parseLine() {
-    char wholeLine[BUFFERSIZE];
-    if (scanf("%s", wholeLine) < 1) {
+    // vai precisar tratar sinal pra liberar wholeLine quando o programa for morto (ctrl c, kill, etc...)
+    char *wholeLine = malloc(sizeof(char) * BUFFERSIZE);
+    // backup da referencia inicial pois strsep() modifica a referencia inicial
+    char *wholeLineBkp = wholeLine;
+    if (scanf("%[^\n]%*c", wholeLine) < 1) {
         perror("Erro scanning stdin.");
         exit(EXIT_FAILURE);
     };
 
     commandLine_t* commandLine = initCommandLine();
 
-
-    for (char* command = strtok(wholeLine, COMMAND_DELIM); command != NULL; command = strtok(NULL, COMMAND_DELIM)) {
-        printf("Tentando parsear comando %s\n", command);
-        commandLine->command[commandLine->commandc++] = parseCommand(command);
+    if(!lineChecker(wholeLine, '|', MAX_COMMANDS)){
+        printf("Too many commands! Max: %d\n", MAX_COMMANDS);
+    }else{
+        for (char* command = strsep(&wholeLine, COMMAND_DELIM); command != NULL; command = strsep(&wholeLine, COMMAND_DELIM)) {
+            // printf("Tentando parsear comando %s\n", command);
+            commandLine->command[commandLine->commandc++] = parseCommand(command);
+        }
     }
 
+    wholeLine = wholeLineBkp;
+    free(wholeLine);
     return commandLine;
 }
