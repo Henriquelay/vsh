@@ -4,10 +4,12 @@
 
 int main(int argc, char* argv[]) {
     while (1) {
-        printf("\nvsh> ");
         commandLine_t* commandLine = parseLine();
 
-        execCommandLine(commandLine);
+        // It frees the memory after execution
+        if(commandLine != NULL) {
+            execCommandLine(commandLine);
+        }
         commandLine = NULL;
     }
     return 0;
