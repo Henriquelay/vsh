@@ -70,7 +70,7 @@ command_t* parseCommand(char* fullCommand) {
             freeCommand(command);
             return NULL;
         }
-        command->argument[(command->argc++) + 1] = copyStr(currentArg);
+        command->argument[command->argc++] = copyStr(currentArg);
     }
 
     return command;
