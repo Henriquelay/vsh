@@ -77,14 +77,11 @@ command_t* parseCommand(char* fullCommand) {
 }
 
 // Waits and parses line from stdin
-commandLine_t* parseLine() {
-    // TODO wholeLine as argument? To reuse buffer between parses
-    char wholeLine[BUFFERSIZE];
-
+commandLine_t* parseLine(char* wholeLine, size_t lineSize) {
     // From https://stackoverflow.com/a/27491954/12921102
     do {
         printf("$vsh> ");
-        if (fgets(wholeLine, BUFFERSIZE, stdin) == NULL) {
+        if (fgets(wholeLine, lineSize, stdin) == NULL) {
             perror("Error reading from stdin");
             exit(EXIT_FAILURE);
         };
@@ -95,7 +92,8 @@ commandLine_t* parseLine() {
     } while (wholeLine[0] == '\0');
 
     commandLine_t* commandLine = initCommandLine();
-
+    // TODO build command structure while reading from stdin
+    // hint: getdelim
     char* reentrantPtr;
     for (char* command = strtok_r(wholeLine, COMMAND_DELIM, &reentrantPtr); command != NULL; command = strtok_r(NULL, COMMAND_DELIM, &reentrantPtr)) {
         // printf("Parsing command [%s]\n", command);
