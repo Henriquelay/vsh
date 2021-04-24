@@ -62,7 +62,7 @@ int execBultin(command_t *command){
 int execSingle(command_t *command){
 
     if(!commandCheck(command)){
-        printf("\nParsed command doesn't exists!");
+        printf("Parsed command doesn't exist!\n");
         exit(1);
     }
 
@@ -78,7 +78,7 @@ int execSingle(command_t *command){
         exit(1);
     }else if (pid == 0){
         if(execvp(command->commandName, command->argument) < 0){
-            printf("\nCould not execute command: %s", command->commandName);
+            printf("Could not execute command: (%s)\n", command->commandName);
         }
         exit(0);
     }else{
@@ -97,12 +97,12 @@ int execPiped(commandLine_t *commands){
     int parent_to_child[2];
 
     if(pipe(child_to_parent) == -1){
-        perror("\nError on pipe creation: child_to_parent");
+        perror("Error on pipe creation: child_to_parent\n");
         exit(1);
     }
 
     if(pipe(parent_to_child) == -1){
-        perror("\nError on pipe creation: parent_to_child");
+        perror("Error on pipe creation: parent_to_child\n");
         exit(1);
     }
 
@@ -111,7 +111,7 @@ int execPiped(commandLine_t *commands){
     pid_t supervisor = fork();
 
     if(supervisor < 0){
-        printf("\nFailed to fork supervisor process");
+        printf("Failed to fork supervisor process\n");
         exit(1);
     }else if(supervisor == 0){
         if(setsid() < 0){
@@ -131,7 +131,7 @@ int execPiped(commandLine_t *commands){
 
                     command_t *currentCmd = commands->command[i];
                     if(!commandCheck(currentCmd)){
-                        printf("\nParsed command doesn't exists!");
+                        printf("Parsed command doesn't exists!\n");
                         exit(1);
                     
                     }
@@ -150,7 +150,7 @@ int execPiped(commandLine_t *commands){
                     close(child_to_parent[1]);
 
                     if(execvp(currentCmd->commandName, currentCmd->argument) < 0){
-                        printf("\nCould not execute command: %s", currentCmd->commandName);
+                        printf("Could not execute command: (%s)\n", currentCmd->commandName);
                     }
 
                 }else{ // supervisors code
@@ -161,13 +161,13 @@ int execPiped(commandLine_t *commands){
                         returnValue = read(child_to_parent[0], &buffer, BUFFERSIZE);
                         close(child_to_parent[0]);
                         if(returnValue < 0){
-                            printf("\nFail to read");
+                            printf("Fail to read\n");
                             exit(1);
                         }
                         returnValue = write(parent_to_child[1], &buffer, strlen(buffer));
                         close(parent_to_child[0]);
                         if(returnValue < 0){
-                            printf("\nFail to write");
+                            printf("Fail to write\n");
                             exit(1);
                         }
                     }
