@@ -1,7 +1,4 @@
 #include "../lib/parser.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 void freeCommand(command_t *c) {
     c->commandName = NULL;
