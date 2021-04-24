@@ -78,15 +78,21 @@ command_t* parseCommand(char* fullCommand) {
 
 // Waits and parses line from stdin
 commandLine_t* parseLine() {
-    // TODO wholeLine as argument? To generate buffer reusage
+    // TODO wholeLine as argument? To reuse buffer between parses
     char wholeLine[BUFFERSIZE];
 
-
-    printf("\n$vsh> ");
-    if (scanf("%[^\n]%*c", wholeLine) == EOF) {
-        perror("Finished reading from stdin");
-        exit(EXIT_FAILURE);
-    };
+    // From https://stackoverflow.com/a/27491954/12921102
+    do {
+        printf("$vsh> ");
+        if (fgets(wholeLine, BUFFERSIZE, stdin) == NULL) {
+            perror("Error reading from stdin");
+            exit(EXIT_FAILURE);
+        };
+        size_t len = strlen(wholeLine);
+        if (len > 0 && wholeLine[len-1] == '\n') {
+            wholeLine[--len] = '\0';
+        }
+    } while (wholeLine[0] == '\0');
 
     commandLine_t* commandLine = initCommandLine();
 
@@ -99,7 +105,7 @@ commandLine_t* parseLine() {
             return NULL;
         }
         // If there was an error parsing arguments
-        command_t *parsedCommand = parseCommand(command);
+        command_t* parsedCommand = parseCommand(command);
         if (parsedCommand == NULL) {
             return NULL;
         }
