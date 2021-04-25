@@ -58,6 +58,10 @@ void execSingle(command_t *command) {
  * Supervisor is kept to receive signals and treat the group os process
  * */
 void execPiped(commandLine_t *commandLine) {
+    // Seting SV to another session
+    // setsid();
+    // Initializin chidren's pipes
+    pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
     for (int i = 0; i < commandLine->commandc - 1; i++) {
         if (pipe(pipes[i]) != 0) {
@@ -68,13 +72,13 @@ void execPiped(commandLine_t *commandLine) {
     for (int i = 0; i < commandLine->commandc; i++) {
         command_t *command = commandLine->command[i];
         // Pipe is accesible on parent and child
-        pid_t childPid = fork();
-        if (childPid == -1) {
+        pidArray[i] = fork();
+        if (pidArray[i] == -1) {
             perror("Fork error");
             exit(EXIT_FAILURE);
         }
 
-        if (childPid == 0) { // Child's code
+        if (pidArray[i] == 0) { // Child's code
             // Sets input to pipe's output and goes to next for iteration
             if (i != 0) { // Not first
                 dup2(pipes[i - 1][0], STDIN_FILENO);
@@ -86,6 +90,9 @@ void execPiped(commandLine_t *commandLine) {
         }
     }
 
+    for (int i = 0; i < commandLine->commandc; i++) {
+        waitpid(pidArray[i], NULL, 0);
+    }
 }
 
 pid_t execCommandLine(commandLine_t *commandLine) {
@@ -99,13 +106,13 @@ pid_t execCommandLine(commandLine_t *commandLine) {
         perror("Failed to fork. Exiting\n");
         exit(EXIT_FAILURE);
     }
-
     if (childpid == 0) {                  // Supervisor's code
         if (commandLine->commandc == 1) { // Single command
             // "Supervisor" becomes the process who runs the command itself
             execSingle(commandLine->command[0]);
         } else { // Piped commands
             execPiped(commandLine);
+            exit(EXIT_SUCCESS);
         }
 
     } else {                              // vsh's code
@@ -113,7 +120,7 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
-            // waitpid(childpid, NULL, 0);
+            waitpid(childpid, NULL, WNOHANG);
         }
     }
 
