@@ -1,59 +1,45 @@
+#include <stdio.h>
 #include "handler.h"
 #include <signal.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
-void SIGU(int sig) {
-    if (sig == 10) {
-        signal(SIGUSR1, SIGU);
-    }
-
-    if (sig == 12) {
-        signal(SIGUSR2, SIGU);
-    }
-    printf("							        "
-           "				_  _\n");
-    printf("								    _ "
-           "_      (0)(0)-._  _.-'^^'^^'^^'^^'^^'--. \n");
-    printf("								   "
-           "(.(.)----'`        ^^'                /^   ^^-._ \n");
-    printf("								    (  "
-           "  `                 \             |    _    ^^-._ \n");
-    printf("								    "
-           "VvvvvvvVv~~`__,/.._>  /:/:/:/:/:/:/:/\  (_..,______^^-. \n");
-    printf("								     "
-           "`^^^^^^^^`/  /   /  /`^^^^^^^^^>^^>^`>  >        _`)  ) \n");
-    printf("								       "
-           "       (((`   (((`          (((`  (((`        `'--'^ ");
-    printf("								I feel "
-           "weird... \n");
+void SIGU(int sig){
+printf("Sinal :%d recebido\n",sig);
+/*
+printf("							        				_  _\n");
+printf("								    _ _      (0)(0)-._  _.-'^^'^^'^^'^^'^^'--. \n");
+printf("								   (.(.)----'`        ^^'                /^   ^^-._ \n");
+printf("								    (    `                 \             |    _    ^^-._ \n");
+printf("								    VvvvvvvVv~~`__,/.._>  /:/:/:/:/:/:/:/\  (_..,______^^-. \n");
+printf("								     `^^^^^^^^`/  /   /  /`^^^^^^^^^>^^>^`>  >        _`)  ) \n");
+printf("								              (((`   (((`          (((`  (((`        `'--'^ ");
+printf("								I feel weird... \n");
+*/
+sleep(5);
+printf("terminei a\n");
 }
 
-int main(int argc, char *argv[]) {
-    while (1) {
+int main(int argc, char* argv[]){
+	
+	
+	// numero dos sinais que tenho que bloquear 
+	// 20 - SIGTSTP
+	// 2 - SIGINT
+	// 3 - SIGQUIT
+	// Sinais que tenho que fazer com que printem na tela
+	// 10 - SIGUSR1
+	// 12 - SIGUSR2
+	
+	// criando a signal mask
+	sigset_t bloqmask;
 
-        // numero dos sinais que tenho que bloquear
-        // 20 - SIGTSTP
-        // 2 - SIGINT
-        // 3 - SIGQUIT
-        // Sinais que tenho que fazer com que printem na tela
-        // 10 - SIGUSR1
-        // 12 - SIGUSR2
+	
 
-        // criando a signal mask
-        sigset_t bloqmask;
-        sigset_t prinmask;
-
-        // a mascara criada como vazia
+	// a mascara criada como vazia
         if (sigemptyset(&bloqmask) == -1) {
             perror("Deu erro ao criar a mascara de bloqueio");
-            return 1;
-        }
-
-        if (sigemptyset(&prinmask) == -1) {
-            perror("Deu erro ao criar a mascara de SIGUSR1 e SIGUSR2");
             return 1;
         }
 
@@ -71,16 +57,6 @@ int main(int argc, char *argv[]) {
             perror("Deu erro ao adicionar o bloqueio do sinal SIGQUIT");
             return 2;
         }
-
-        // if (sigaddset(&prinmask, SIGUSR1) == -1) {
-        //     perror("Error na instalacao do SIGUSR1");
-        //     return 3;
-        // }
-        // if (sigaddset(&prinmask, SIGUSR2) == -1) {
-        //     perror("Error na instalacao do SIGUSR2");
-        //     return 3;
-        // }
-
         // struct pro SIGUSR1 e SIGUSR2
         struct sigaction sigactionStruct;
         sigactionStruct.sa_mask = bloqmask;
@@ -101,10 +77,17 @@ int main(int argc, char *argv[]) {
             // install sigaction on parent, why should I be able to do so on
             // child?
         }
-
+	while(1){
+				printf("raise SIGUSR1\n");
         raise(SIGUSR1);
         sleep(3);
+        printf("raise SIGUSR2\n");
+        raise(SIGUSR2);
+        sleep(3);
+        printf("TESTANDO");
+        printf("raise SIGINT\n");
+        
     }
-
-    return 0;
+	
+	return 0;
 }
