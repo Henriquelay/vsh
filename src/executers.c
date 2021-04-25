@@ -108,12 +108,12 @@ int execPiped(commandLine_t *commands){
 
     pid_t pids[commands->commandc];
 
-    pid_t mother = fork();
+    pid_t supervisor = fork();
 
-    if(mother < 0){
-        printf("\nFailed to fork Mother process");
+    if(supervisor < 0){
+        printf("\nFailed to fork supervisor process");
         exit(1);
-    }else if(mother == 0){
+    }else if(supervisor == 0){
         if(setsid() < 0){
             printf("sid error");
             exit(1);
@@ -138,7 +138,6 @@ int execPiped(commandLine_t *commands){
 
                     close(parent_to_child[1]);
                     if(i != 0){
-                        printf("\n%d bind do stdin\n", pids[i]);
                         dup2(parent_to_child[0], STDIN_FILENO);
                     }
                     close(parent_to_child[0]);
@@ -146,7 +145,6 @@ int execPiped(commandLine_t *commands){
 
                     close(child_to_parent[0]);
                     if ((i+1) != commands->commandc){
-                        printf("\n%d bind do stdout\n", pids[i]);
                         dup2(child_to_parent[1], STDOUT_FILENO);
                     }
                     close(child_to_parent[1]);
@@ -155,27 +153,26 @@ int execPiped(commandLine_t *commands){
                         printf("\nCould not execute command: %s", currentCmd->commandName);
                     }
 
-                }else{
+                }else{ // supervisors code
                     char buffer[BUFFERSIZE];
                     int returnValue = 0;
 
                     if((i+1) != commands->commandc){
                         returnValue = read(child_to_parent[0], &buffer, BUFFERSIZE);
-                        printf("\n leitura do pipe\n");
-                        printf("\n %s \n", buffer);
+                        close(child_to_parent[0]);
                         if(returnValue < 0){
                             printf("\nFail to read");
                             exit(1);
                         }
                         returnValue = write(parent_to_child[1], &buffer, strlen(buffer));
-                        printf("\n escrita do pipe\n");
+                        close(parent_to_child[0]);
                         if(returnValue < 0){
                             printf("\nFail to write");
                             exit(1);
                         }
                     }
                     /* 
-                    # TODO
+                    # TODO [SOLVED]
                     Testando com o comando "ls -la | grep vsh": 
                     - O "ls -la" executa
                     - o pai recebe a saída de "ls -la"
@@ -188,14 +185,28 @@ int execPiped(commandLine_t *commands){
                             \_ grep vsh
 
                     Pra debuggar tem que pegar o pid da mãe que o programa printa e procurar no comando "ps auxf"
+
+                    SOLUTION: Mãe não estava fechando os pipes depois de ler e escrever
+
                     */
+
+
+                   /*
+                   # TODO
+                   O último comando não está printando a saída no terminal.
+                   Ex: ls -la | grep vsh
+                   A saída fica vazia. Deveria ser algo como:
+                    -rwxr-xr-x  1 davi davi 42808 Apr 22 20:46 vsh
+                   */
+                   
                     waitpid(pids[i], NULL, 0);
                 }
             }
         }
     }else{
-        printf("\nPID da mãe: %d\n", mother);
-        waitpid(mother, NULL, WNOHANG);
+        // printf("\nPID da mãe: %d\n", supervisor);
+        waitpid(supervisor, NULL, WNOHANG);
+        return supervisor;
     }
 
     return 0;   
