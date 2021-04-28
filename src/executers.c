@@ -54,7 +54,7 @@ void execSingle(command_t *command) {
 
 void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
     for (unsigned int i = 0; i < pipesCount; i++) {
-        if(close(pipes[i][desc]) != 0) {
+        if (close(pipes[i][desc]) == -1) {
             perror("Error closing pipe");
             exit(EXIT_FAILURE);
         }
@@ -104,22 +104,24 @@ void execPiped(commandLine_t *commandLine) {
                 }
             }
 
-            // closePipes(pipes, commandLine->commandc, 0);
-            // closePipes(pipes, commandLine->commandc, 1);
+            closePipes(pipes, commandLine->commandc - 1, 0);
+            closePipes(pipes, commandLine->commandc - 1, 1);
 
             execSingle(command);
         }
     }
 
     freeCommandLine(commandLine);
-    // closePipes(pipes, commandLine->commandc, 0);
-    // closePipes(pipes, commandLine->commandc, 1);
+    closePipes(pipes, commandLine->commandc - 1, 0);
+    closePipes(pipes, commandLine->commandc - 1, 1);
     // Supervisor waits for last child to finish, so it won't exit if a child is
     // running
     int status;
-    waitpid(pidArray[commandLine->commandc - 1], &status, 0);
+    for (unsigned int i = 0; i < commandLine->commandc; i++) {
+        waitpid(pidArray[i], &status, 0);
+    }
     // TODO: Raise SIGUSR1 or SIGUSR2 if returned on `signal`
-
+    // TODO: Raise "finished" signal to main before exiting
     exit(EXIT_SUCCESS);
 }
 
