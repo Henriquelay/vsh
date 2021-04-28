@@ -20,6 +20,16 @@
                     "description": "Enable pretty-printing for gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Follow children mode for gdb",
+                    "text": "-gdb-set follow-fork-mode child",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Dettach on fork mode for gdb",
+                    "text": "-gdb-set detach-on-fork off",
+                    "ignoreFailures": false
                 }
             ],
             "preLaunchTask": "Build with makefile",

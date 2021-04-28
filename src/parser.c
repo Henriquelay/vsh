@@ -28,8 +28,7 @@ command_t *initCommand() {
 }
 
 commandLine_t *initCommandLine() {
-    commandLine_t *newCommandLine =
-        (commandLine_t *)malloc(sizeof(commandLine_t));
+    commandLine_t *newCommandLine = (commandLine_t *)malloc(sizeof(commandLine_t));
     if (newCommandLine == NULL) {
         perror("Error allocating new commandLine_t");
         exit(EXIT_FAILURE);
@@ -60,12 +59,9 @@ command_t *parseCommand(char *fullCommand) {
     command->argument[command->argc] = copyStr(strtok(fullCommand, ARGS_DELIM));
     command->commandName = command->argument[command->argc++];
 
-    for (char *currentArg = strtok(NULL, ARGS_DELIM);
-         currentArg != NULL && strcmp(currentArg, COMMAND_DELIM) != 0;
-         currentArg = strtok(NULL, ARGS_DELIM)) {
+    for (char *currentArg = strtok(NULL, ARGS_DELIM); currentArg != NULL && strcmp(currentArg, COMMAND_DELIM) != 0; currentArg = strtok(NULL, ARGS_DELIM)) {
         // printf("Copying str [%s]\n", currentArg);
-        // Just a reminder that arguments[0] is the commandName itself, there
-        // there is actually 1 more argument;
+        // Just a reminder that arguments[0] is the commandName itself, there there is actually 1 more argument;
         if (command->argc > MAX_ARGUMENTS) {
             printf("Too many arguments! Max: %d\n", MAX_ARGUMENTS);
             freeCommand(command);
@@ -96,9 +92,7 @@ commandLine_t *parseLine(char *wholeLine, size_t lineSize) {
     // TODO build command structure while reading from stdin
     // hint: getdelim
     char *reentrantPtr;
-    for (char *command = strtok_r(wholeLine, COMMAND_DELIM, &reentrantPtr);
-         command != NULL;
-         command = strtok_r(NULL, COMMAND_DELIM, &reentrantPtr)) {
+    for (char *command = strtok_r(wholeLine, COMMAND_DELIM, &reentrantPtr); command != NULL; command = strtok_r(NULL, COMMAND_DELIM, &reentrantPtr)) {
         // printf("Parsing command [%s]\n", command);
         if (commandLine->commandc > MAX_COMMANDS) {
             printf("Too many commands! Max: %d\n", MAX_COMMANDS);
