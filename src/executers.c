@@ -115,14 +115,13 @@ void execPiped(commandLine_t *commandLine) {
     freeCommandLine(commandLine);
     closePipes(pipes, commandLine->commandc - 1, 0);
     closePipes(pipes, commandLine->commandc - 1, 1);
-    // Supervisor waits for last child to finish, so it won't exit if a child is
-    // running
+    // Supervisor waits for last child to finish, so it won't exit if a child is running
     int status;
     for (unsigned int i = 0; i < commandLine->commandc; i++) {
         waitpid(pidArray[i], &status, 0);
     }
     // TODO: Raise SIGUSR1 or SIGUSR2 if returned on `signal`
-    // TODO: Raise "finished" signal to main before exiting
+    // TODO: Raise "finished" signal to main before exiting, so it can run waiting routine
     exit(EXIT_SUCCESS);
 }
 
@@ -145,12 +144,13 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             execPiped(commandLine);
         }
 
-    } else {                              // vsh's code
+    } else { // vsh's code
         if (commandLine->commandc == 1) { // Single command
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
             waitpid(childpid, NULL, WNOHANG);
+            // TODO place PID in waitlist if waiting fails
         }
     }
 
