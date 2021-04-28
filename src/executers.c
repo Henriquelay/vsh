@@ -31,6 +31,7 @@ void execIfBultin(command_t *command) {
     int builtinValue = isBuiltin(command);
     if (builtinValue) {
         switch (command->commandName[0]) {
+        // TODO
         case 'l': // "liberamoita"
             printf("liberamoita");
             exit(0);
