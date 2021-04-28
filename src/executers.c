@@ -45,8 +45,19 @@ void execIfBultin(command_t *command) {
 
 void execSingle(command_t *command) {
     execIfBultin(command);
-    if (execvp(command->commandName, command->argument) < 0) {
+    if (execvp(command->commandName, command->argument) == -1) {
+        perror("Error executing command");
         printf("Could not execute command: (%s)\n", command->commandName);
+        exit(EXIT_FAILURE);
+    }
+}
+
+void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
+    for (unsigned int i = 0; i < pipesCount; i++) {
+        if(close(pipes[i][desc]) != 0) {
+            perror("Error closing pipe");
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
@@ -59,7 +70,7 @@ void execSingle(command_t *command) {
  * */
 void execPiped(commandLine_t *commandLine) {
     // Seting SV to another session
-    // setsid();
+    setsid();
     // Initializin chidren's pipes
     pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
@@ -81,18 +92,35 @@ void execPiped(commandLine_t *commandLine) {
         if (pidArray[i] == 0) { // Child's code
             // Sets input to pipe's output and goes to next for iteration
             if (i != 0) { // Not first
-                dup2(pipes[i - 1][0], STDIN_FILENO);
+                if (dup2(pipes[i - 1][0], STDIN_FILENO) == -1) {
+                    perror("Dup2 error");
+                    exit(EXIT_FAILURE);
+                }
             }
-            if (i != commandLine->commandc - 1) {
-                dup2(pipes[i][1], STDOUT_FILENO);
+            if (i != commandLine->commandc - 1) { // Not last
+                if (dup2(pipes[i][1], STDOUT_FILENO) == -1) {
+                    perror("Dup2 error");
+                    exit(EXIT_FAILURE);
+                }
             }
+
+            // closePipes(pipes, commandLine->commandc, 0);
+            // closePipes(pipes, commandLine->commandc, 1);
+
             execSingle(command);
         }
     }
 
-    for (int i = 0; i < commandLine->commandc; i++) {
-        waitpid(pidArray[i], NULL, 0);
-    }
+    freeCommandLine(commandLine);
+    // closePipes(pipes, commandLine->commandc, 0);
+    // closePipes(pipes, commandLine->commandc, 1);
+    // Supervisor waits for last child to finish, so it won't exit if a child is
+    // running
+    int status;
+    waitpid(pidArray[commandLine->commandc - 1], &status, 0);
+    // TODO: Raise SIGUSR1 or SIGUSR2 if returned on `signal`
+
+    exit(EXIT_SUCCESS);
 }
 
 pid_t execCommandLine(commandLine_t *commandLine) {
@@ -112,7 +140,6 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             execSingle(commandLine->command[0]);
         } else { // Piped commands
             execPiped(commandLine);
-            exit(EXIT_SUCCESS);
         }
 
     } else {                              // vsh's code
