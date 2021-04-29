@@ -85,8 +85,7 @@ commandLine_t *parseLine(char *wholeLine, size_t lineSize) {
     do {
         printf("$vsh> ");
         if (fgets(wholeLine, lineSize, stdin) == NULL) {
-            perror("Error reading from stdin");
-            exit(EXIT_FAILURE);
+            wholeLine[0] = '\0';
         };
         size_t len = strlen(wholeLine);
         if (len > 0 && wholeLine[len - 1] == '\n') {
