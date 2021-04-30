@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <stdio.h>
 #include "list.h"
 
 list_t* list_init() {
@@ -12,14 +14,11 @@ list_t* list_init() {
     return newList;
 }
 
-char list_isEmpty(list_t* list) {
+int list_isEmpty(list_t* list) {
     return list->head == NULL;
 }
 
-void list_push(list_t* list, void* item) {
-    if (item == NULL) {
-        return;
-    }
+void list_push(list_t* list, pid_t item) {
     linked_node_t* newNode = (linked_node_t*)malloc(sizeof(linked_node_t));
     if (newNode == NULL) {
         perror("Allocation error: Node couldn't be created. Exiting.");
@@ -38,65 +37,44 @@ void list_push(list_t* list, void* item) {
     }
 }
 
-void* list_pop(list_t* list) {
+pid_t list_remove(list_t* list, pid_t item) {
     if (list->head == NULL) {
         return NULL;
     }
 
-    void* holder = list->head->value;
-    linked_node_t* destroyMe = list->head;
-    list->head = list->head->next;
-    if (list->head == NULL) {
-        list->tail = NULL;
-    } else {
-        list->head->previous = NULL;
+    linked_node_t* actual = list->head;
+    if(list_isEmpty(list)){
+        return (pid_t)0;
     }
-    free(destroyMe);
-    return holder;
+    while(actual != NULL) {
+        if(actual->value == item){
+            if(actual == list->head){
+                list->head = NULL;
+                if(actual == list->tail){
+                    list->tail = NULL;
+                }else{
+                    list->head = actual->next;
+                    list->head->previous = NULL;                    
+                }
+            }else if(actual == list->tail){
+                list->tail = actual->previous;
+                list->tail->next = NULL;
+            }else{
+                actual->previous->next = actual->next;
+                actual->next->previous = actual->previous;
+            }
+            free(actual);
+            return item;    
+        }
+    }
+    return (pid_t)0;
 }
 
-void list_enqueue(list_t* list, void* item) {
-    if (item == NULL) {
-        return;
-    }
-    linked_node_t* newNode = (linked_node_t*)malloc(sizeof(linked_node_t));
-    if (newNode == NULL) {
-        perror("Allocation error: Node couldn't be created. Exiting.");
-        exit(1);
-    }
-
-    newNode->value = item;
-    newNode->next = NULL;
-    newNode->previous = list->tail;
-    if (newNode->previous != NULL) {
-        newNode->previous->next = newNode;
-    }
-    list->tail = newNode;
-    if (list->head == NULL) {
-        list->head = newNode;
-    }
-}
-
-void* list_dequeue(list_t* list) {
-    return list_pop(list);
-}
-
-void list_print(list_t* list, const char* format) {
+void list_print(list_t* list) {
     for (linked_node_t* current = list->head; current != NULL; current = current->next) {
-        printf(format, current->value);
+        printf("pid: %d\n", current->value);
     }
     puts("");
-}
-
-void pointerThingy(linked_node_t* node) {
-    if (node != NULL) {
-        if (node->next != NULL) {
-            node->next->previous = node->previous;
-        }
-        if (node->previous != NULL) {
-            node->previous->next = node->next;
-        }
-    }
 }
 
 void list_destroy(list_t* list) {
@@ -104,7 +82,6 @@ void list_destroy(list_t* list) {
         while (list->head != NULL) {
             linked_node_t* freeMe = list->head;
             list->head = list->head->next;
-            free(freeMe->value);
             free(freeMe);
         }
         free(list);
