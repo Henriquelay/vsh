@@ -5,7 +5,34 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "../lib/executers.h"
+#include "../lib/list.h"
 
+list_t *Supervisors = NULL;
+list_t *Pids = NULL;
+
+void wait_pids(int sig){
+    linked_node_t *current = Supervisors->head;
+
+    // clean supervisors
+    while(current != NULL){
+        if(waitpid(current->value, NULL, WNOHANG) > 0){
+            list_remove(Supervisors, current->value);
+            break;
+        }
+        current = current->next;
+    }
+
+    current = Pids->head;
+
+    // clean childs
+    while(current != NULL){
+        pid_t pid = current->value;
+        current = current->next;
+        if(waitpid(pid, NULL, WNOHANG) > 0){
+            list_remove(Pids, pid);
+        }
+    }
+}
 
 int commandLineCheck(commandLine_t *commandLine) {
     if (commandLine != NULL) {
@@ -24,9 +51,9 @@ int commandLineCheck(commandLine_t *commandLine) {
 }
 
 int isBuiltin(command_t *command) {
-    const char *builtinCommands[] = {"liberamoita", "armageddon"};
+    const char *builtinCommands[] = {"liberamoita", "armageddon", "exit"};
     int commandNumber = 0;
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         if (!strcmp(builtinCommands[i], command->commandName)) {
             commandNumber = i + 1;
         }
@@ -44,7 +71,12 @@ void execIfBultin(command_t *command) {
             exit(0);
             break;
         case 'a': // "armageddon"
-            printf("armageddon");
+            // TODO: não esquecer de destruir a lista de pids e supervisors nesse comando
+            printf("armageddon"); 
+            exit(0);
+            break;
+        case 'e': // "exit"
+            kill(getppid(), SIGKILL);
             exit(0);
             break;
         }
@@ -53,6 +85,7 @@ void execIfBultin(command_t *command) {
 
 void execSingle(command_t *command) {
     execIfBultin(command);
+    printf("passou daqui");
     if (execvp(command->commandName, command->argument) == -1) {
         perror("Error executing command");
         printf("Could not execute command: (%s)\n", command->commandName);
@@ -115,7 +148,10 @@ void execPiped(commandLine_t *commandLine) {
             closePipes(pipes, commandLine->commandc - 1, 0);
             closePipes(pipes, commandLine->commandc - 1, 1);
 
+
             execSingle(command);
+        }else{
+            list_push(Pids, pidArray[i]); // esse inferno n ta aparecendo na lista mesmo depois do push
         }
     }
 
@@ -138,6 +174,14 @@ pid_t execCommandLine(commandLine_t *commandLine) {
         return 1;
     }
 
+    if(Pids == NULL) {
+        Pids = list_init();
+    }
+
+    if(Supervisors == NULL) {
+        Supervisors = list_init();
+    }
+
     pid_t childpid = fork();
     if (childpid == -1) {
         perror("Failed to fork. Exiting\n");
@@ -153,12 +197,19 @@ pid_t execCommandLine(commandLine_t *commandLine) {
 
     } else { // vsh's code
         if (commandLine->commandc == 1) { // Single command
+            list_push(Pids, childpid);
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
+            list_remove(Pids, childpid);
         } else { // Piped commands
-            waitpid(childpid, NULL, WNOHANG);
-            // TODO place PID in waitlist if waiting fails
+            if(waitpid(childpid, NULL, WNOHANG) <= 0){
+                // list_push(Supervisors, childpid);
+            }
         }
+        printf("childs: ");
+        list_print(Pids);
+        printf("supervisors: ");
+        list_print(Supervisors);
     }
 
     freeCommandLine(commandLine);

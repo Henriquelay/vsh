@@ -20,6 +20,7 @@ int list_isEmpty(list_t* list) {
 
 void list_push(list_t* list, pid_t item) {
     linked_node_t* newNode = (linked_node_t*)malloc(sizeof(linked_node_t));
+    printf("push %d", item);
     if (newNode == NULL) {
         perror("Allocation error: Node couldn't be created. Exiting.");
         exit(1);
@@ -64,6 +65,7 @@ pid_t list_remove(list_t* list, pid_t item) {
                 actual->next->previous = actual->previous;
             }
             free(actual);
+            printf("remove %d", item);
             return item;    
         }
     }
