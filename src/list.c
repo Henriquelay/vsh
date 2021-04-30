@@ -39,7 +39,7 @@ void list_push(list_t* list, pid_t item) {
 
 pid_t list_remove(list_t* list, pid_t item) {
     if (list->head == NULL) {
-        return NULL;
+        return (pid_t)0;
     }
 
     linked_node_t* actual = list->head;
