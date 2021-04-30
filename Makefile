@@ -12,7 +12,7 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CC = gcc
-CFLAGS ?= $(INC_FLAGS) -pedantic -g -Wall -Werror -Wwrite-strings -O4
+CFLAGS ?= $(INC_FLAGS) -pedantic -g -Wall -Wwrite-strings -O4
 
 VALGRIND ?= valgrind
 VALZIN_FLAGS ?=

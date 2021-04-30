@@ -150,14 +150,17 @@ void execPiped(commandLine_t *commandLine) {
 
 
             execSingle(command);
-        }else{
-            list_push(Pids, pidArray[i]); // esse inferno n ta aparecendo na lista mesmo depois do push
         }
     }
 
-    freeCommandLine(commandLine);
     closePipes(pipes, commandLine->commandc - 1, 0);
     closePipes(pipes, commandLine->commandc - 1, 1);
+    for (int i = 0; i < commandLine->commandc - 1; i++)
+    {
+        list_push(Pids, pidArray[i]);
+    }
+    freeCommandLine(commandLine);
+    
     // Supervisor waits for last child to finish, so it won't exit if a child is running
     int status;
     for (unsigned int i = 0; i < commandLine->commandc; i++) {
@@ -197,13 +200,11 @@ pid_t execCommandLine(commandLine_t *commandLine) {
 
     } else { // vsh's code
         if (commandLine->commandc == 1) { // Single command
-            list_push(Pids, childpid);
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
-            list_remove(Pids, childpid);
         } else { // Piped commands
             if(waitpid(childpid, NULL, WNOHANG) <= 0){
-                // list_push(Supervisors, childpid);
+                list_push(Supervisors, childpid);
             }
         }
         printf("childs: ");
