@@ -1,15 +1,19 @@
 #include "../lib/executers.h"
 
+static list_t *SIDs = NULL;
+
 void waitSupervisors() {
-    wait(NULL);
+    pid_t waited = wait(NULL);
+    list_remove(SIDs, getsid(waited));
 }
 
-// void killpgList(linked_node_t *supervisor) {
-//     if (kill(supervisor->value, SIGKILL) != 0) {
-//         perror("Killpg failed");
-//         exit(EXIT_FAILURE);
-//     }
-// }
+void killpgList(linked_node_t *SID) {
+    printf("Sending sig to gid %d\n", SID->value);
+    if (killpg(SID->value, SIGKILL) != 0) {
+        perror("Killpg failed");
+        exit(EXIT_FAILURE);
+    }
+}
 
 int commandLineCheck(commandLine_t *commandLine) {
     if (commandLine != NULL) {
@@ -47,10 +51,16 @@ int execIfBultin(command_t *command) {
             printf("liberamoita");
             exit(0);
         case 'a': // "armageddon"
-            // printf("Executing armageddon...\n");
+        // TODO não está botando o SID na lista
+        // FIXME
+            printf("It's the end...\n");
+            printf("List:\n");
+            printf("%p\n", (void*) SIDs->head);
+            list_print(SIDs);
+            list_runOnAll(SIDs, killpgList);
+            list_destroy(SIDs);
             exit(0);
         case 'e': // "exit"
-            kill(getppid(), SIGTERM);
             exit(0);
         case 'w': // "wait"
             waitSupervisors();
@@ -86,8 +96,9 @@ void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
  * Supervisor is kept to receive signals and treat the group os process
  * */
 void execPiped(commandLine_t *commandLine) {
-    // Seting SV to another session
+    // Changing to new Session
     pid_t sid = setsid();
+    list_push(SIDs, sid);
     // Initializin chidren's pipes
     pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
@@ -141,7 +152,7 @@ void execPiped(commandLine_t *commandLine) {
 
     kill(getppid(), SIG_WAIT);
     printf("Supervisor out! Bye!\n");
-    exit(sid);
+    exit(EXIT_SUCCESS);
 }
 
 pid_t execCommandLine(commandLine_t *commandLine) {
@@ -154,6 +165,9 @@ pid_t execCommandLine(commandLine_t *commandLine) {
         return 0;
     };
 
+    if (SIDs == NULL) {
+        SIDs = list_init();
+    }
     pid_t childpid = fork();
     if (childpid == -1) {
         perror("Failed to fork. Exiting\n");
@@ -172,7 +186,6 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
-            if (waitpid(childpid, NULL, WNOHANG) <= 0) {}
         }
     }
 
