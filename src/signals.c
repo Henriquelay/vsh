@@ -8,7 +8,6 @@ void jacarezin(int sig) {
     printf("VvvvvvvVv~~`__,/.._>  /:/:/:/:/:/:/:/\\  (_..,______^^-. \n");
     printf("`^^^^^^^^`/  /   /  /`^^^^^^^^^>^^>^`>  >        _`)  ) \n");
     printf("		(((`   (((`          (((`  (((`        `'--'^ \n");
-    sleep(5);
     printf("I feel weird... \n");
 }
 
@@ -56,6 +55,27 @@ void takeVaChina() {
         exit(EXIT_FAILURE);
     }
     if (sigaction(SIGUSR2, &sigstruct, 0) == -1) {
+        perror("Error installing sigaction\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void waitHandler(int sig) {
+    printf("A supervisor finished. Waiting for all supervisors:\n");
+    waitSupervisors();
+}
+
+void installWaiter() {
+    sigset_t bloqmask;
+
+    defaultBlockMask(&bloqmask);
+
+    struct sigaction sigstruct;
+    sigstruct.sa_mask = bloqmask;
+    sigstruct.sa_handler = waitHandler;
+    sigstruct.sa_flags = 0;
+
+    if (sigaction(SIG_WAIT, &sigstruct, 0) == -1) {
         perror("Error installing sigaction\n");
         exit(EXIT_FAILURE);
     }
