@@ -1,38 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include "../lib/executers.h"
-#include "../lib/list.h"
 
-list_t *Supervisors = NULL;
-list_t *Pids = NULL;
-
-void wait_pids(int sig){
-    linked_node_t *current = Supervisors->head;
-
-    // clean supervisors
-    while(current != NULL){
-        if(waitpid(current->value, NULL, WNOHANG) > 0){
-            list_remove(Supervisors, current->value);
-            break;
-        }
-        current = current->next;
-    }
-
-    current = Pids->head;
-
-    // clean childs
-    while(current != NULL){
-        pid_t pid = current->value;
-        current = current->next;
-        if(waitpid(pid, NULL, WNOHANG) > 0){
-            list_remove(Pids, pid);
-        }
-    }
+void waitSupervisors() {
+    wait(NULL);
 }
+
+// void killpgList(linked_node_t *supervisor) {
+//     if (kill(supervisor->value, SIGKILL) != 0) {
+//         perror("Killpg failed");
+//         exit(EXIT_FAILURE);
+//     }
+// }
 
 int commandLineCheck(commandLine_t *commandLine) {
     if (commandLine != NULL) {
@@ -51,9 +28,9 @@ int commandLineCheck(commandLine_t *commandLine) {
 }
 
 int isBuiltin(command_t *command) {
-    const char *builtinCommands[] = {"liberamoita", "armageddon", "exit"};
+    const char *builtinCommands[] = {"liberamoita", "armageddon", "exit", "wait"};
     int commandNumber = 0;
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 4; i++) {
         if (!strcmp(builtinCommands[i], command->commandName)) {
             commandNumber = i + 1;
         }
@@ -61,7 +38,7 @@ int isBuiltin(command_t *command) {
     return commandNumber;
 }
 
-void execIfBultin(command_t *command) {
+int execIfBultin(command_t *command) {
     int builtinValue = isBuiltin(command);
     if (builtinValue) {
         switch (command->commandName[0]) {
@@ -69,23 +46,22 @@ void execIfBultin(command_t *command) {
         case 'l': // "liberamoita"
             printf("liberamoita");
             exit(0);
-            break;
         case 'a': // "armageddon"
-            // TODO: não esquecer de destruir a lista de pids e supervisors nesse comando
-            printf("armageddon"); 
+            // printf("Executing armageddon...\n");
             exit(0);
-            break;
         case 'e': // "exit"
-            kill(getppid(), SIGKILL);
+            kill(getppid(), SIGTERM);
             exit(0);
-            break;
+        case 'w': // "wait"
+            waitSupervisors();
+            return 1;
         }
     }
+    return 0;
 }
 
 void execSingle(command_t *command) {
-    execIfBultin(command);
-    printf("passou daqui");
+    // execIfBultin(command);
     if (execvp(command->commandName, command->argument) == -1) {
         perror("Error executing command");
         printf("Could not execute command: (%s)\n", command->commandName);
@@ -111,7 +87,7 @@ void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
  * */
 void execPiped(commandLine_t *commandLine) {
     // Seting SV to another session
-    setsid();
+    pid_t sid = setsid();
     // Initializin chidren's pipes
     pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
@@ -148,27 +124,24 @@ void execPiped(commandLine_t *commandLine) {
             closePipes(pipes, commandLine->commandc - 1, 0);
             closePipes(pipes, commandLine->commandc - 1, 1);
 
-
             execSingle(command);
         }
     }
 
     closePipes(pipes, commandLine->commandc - 1, 0);
     closePipes(pipes, commandLine->commandc - 1, 1);
-    for (int i = 0; i < commandLine->commandc - 1; i++)
-    {
-        list_push(Pids, pidArray[i]);
-    }
-    freeCommandLine(commandLine);
-    
+
     // Supervisor waits for last child to finish, so it won't exit if a child is running
     int status;
     for (unsigned int i = 0; i < commandLine->commandc; i++) {
         waitpid(pidArray[i], &status, 0);
     }
+    freeCommandLine(commandLine);
     // TODO: Raise SIGUSR1 or SIGUSR2 if returned on `signal`
-    // TODO: Raise "finished" signal to main before exiting, so it can run waiting routine
-    exit(EXIT_SUCCESS);
+
+    kill(getppid(), SIG_WAIT);
+    printf("Supervisor out! Bye!\n");
+    exit(sid);
 }
 
 pid_t execCommandLine(commandLine_t *commandLine) {
@@ -177,13 +150,9 @@ pid_t execCommandLine(commandLine_t *commandLine) {
         return 1;
     }
 
-    if(Pids == NULL) {
-        Pids = list_init();
-    }
-
-    if(Supervisors == NULL) {
-        Supervisors = list_init();
-    }
+    if (execIfBultin(commandLine->command[0]) > 0) {
+        return 0;
+    };
 
     pid_t childpid = fork();
     if (childpid == -1) {
@@ -198,19 +167,13 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             execPiped(commandLine);
         }
 
-    } else { // vsh's code
+    } else {                              // vsh's code
         if (commandLine->commandc == 1) { // Single command
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
-            if(waitpid(childpid, NULL, WNOHANG) <= 0){
-                list_push(Supervisors, childpid);
-            }
+            if (waitpid(childpid, NULL, WNOHANG) <= 0) {}
         }
-        printf("childs: ");
-        list_print(Pids);
-        printf("supervisors: ");
-        list_print(Supervisors);
     }
 
     freeCommandLine(commandLine);
