@@ -1,24 +1,12 @@
 #include "../lib/executers.h"
 #include "../lib/parser.h"
-#include <stdio.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include "../lib/signals.h"
 
 
 
 int main(int argc, char *argv[]) {
-	// criando a signal mask
-	sigset_t bloqmask;
-
-	defaultBlockMask(&bloqmask);
-
-    // struct pro SIGUSR1 e SIGUSR2
-    struct sigaction sigactionStruct;
-    
-    vaChinaAction(&sigactionStruct, &bloqmask);
+    // Vsh has been imunized by a weird immunoagent from the east
+    takeVaChina();
 
     // To reuse between input reads
     char linebuffer[BUFFERSIZE];

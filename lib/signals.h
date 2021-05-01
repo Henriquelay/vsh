@@ -5,12 +5,17 @@
 #define _VSH_SIGNALS_H_
 
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
-void defaultBlockMask(sigset_t *blockmask);
+// void defaultBlockMask(sigset_t *blockmask);
 
-void setSigAction(struct sigaction *sigstruct, sigset_t *mask, void (*handler)(int));
+// void setSigAction(struct sigaction *sigstruct, sigset_t *mask, void (*handler)(int));
 
-void vaChinaAction(struct sigaction *sigstruct, sigset_t *mask);
+void takeVaChina();
 
 void cloroquinaAction(struct sigaction *sigstruct, sigset_t *mask);
 
