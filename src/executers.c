@@ -3,8 +3,9 @@
 static list_t *SIDs = NULL;
 
 void waitSupervisors() {
-    pid_t waited = wait(NULL);
-    list_remove(SIDs, getsid(waited));
+    // Tive que comentar pois esse wait estava dando halt no programa
+    // pid_t waited = wait(NULL);
+    // list_remove(SIDs, getsid(waited));
 }
 
 void killpgList(linked_node_t *SID) {
@@ -98,7 +99,8 @@ void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
 void execPiped(commandLine_t *commandLine) {
     // Changing to new Session
     pid_t sid = setsid();
-    list_push(SIDs, sid);
+    printf("Supervisor: My session is %d\n", sid);
+    // list_push(SIDs, sid);
     // Initializin chidren's pipes
     pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
@@ -186,6 +188,11 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
+            while(getpgid(getpid()) ==  getpgid(childpid)){
+                continue;
+            }
+            list_push(SIDs, getpgid(childpid));
+            list_print(SIDs);
         }
     }
 
