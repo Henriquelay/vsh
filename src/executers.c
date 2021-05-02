@@ -3,23 +3,30 @@
 static list_t *SIDs = NULL;
 
 void killpgList(linked_node_t *SID) {
-    printf("Sending sig to gid %d\n", SID->value);
-    if (killpg(SID->value, SIGKILL) != 0) {
+    printf("Sending sig to gid %d\n", SID->sid);
+    if (killpg(SID->sid, SIGKILL) != 0) {
         perror("Killpg failed");
         exit(EXIT_FAILURE);
     }
 }
 
 void waitSupervisors() {
+    while (SIDs->mutex){
+        continue;
+    }
+    SIDs->mutex = 1;
     linked_node_t *actual = SIDs->head;
     while(actual != NULL) {
         linked_node_t *node = actual;
         actual = actual->next;
-        if(waitpid(node->value, NULL, WNOHANG) > 0){
+        int waitReturn = waitpid(node->supervisor, NULL, WNOHANG);
+        printf("NOHANG return:: %d\n", waitReturn);
+        if(waitReturn > 0){
             killpgList(node);
             list_removeNode(SIDs, node);
         }
     }
+    SIDs->mutex = 0;
 }
 
 int commandLineCheck(commandLine_t *commandLine) {
@@ -175,6 +182,7 @@ pid_t execCommandLine(commandLine_t *commandLine) {
 
     if (SIDs == NULL) {
         SIDs = list_init();
+        SIDs->mutex = 0;
     }
     pid_t childpid = fork();
     if (childpid == -1) {
@@ -194,11 +202,16 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
+            while (SIDs->mutex){
+                continue;
+            }
+            SIDs->mutex = 1;
             while(getpgid(getpid()) ==  getpgid(childpid)){
                 continue;
             }
-            list_push(SIDs, getpgid(childpid));
+            list_push(SIDs, getpgid(childpid), childpid);
             list_print(SIDs);
+            SIDs->mutex = 0;
         }
     }
 

@@ -18,15 +18,16 @@ int list_isEmpty(list_t *list) {
     return list->head == NULL;
 }
 
-void list_push(list_t *list, pid_t item) {
+void list_push(list_t* list, pid_t sid, pid_t supervisor) {
     linked_node_t *newNode = (linked_node_t *)malloc(sizeof(linked_node_t));
-    // printf("push %d\n", item);
+    // printf("push %d\n", sid);
     if (newNode == NULL) {
         perror("Allocation error: Node couldn't be created. Exiting.");
         exit(1);
     }
 
-    newNode->value = item;
+    newNode->sid = sid;
+    newNode->supervisor = supervisor;
     newNode->previous = NULL;
     newNode->next = list->head;
     if (newNode->next != NULL) {
@@ -38,7 +39,7 @@ void list_push(list_t *list, pid_t item) {
     }
 }
 
-pid_t list_remove(list_t *list, pid_t item) {
+pid_t list_remove(list_t *list, pid_t sid) {
     if (list == NULL) {
         return (pid_t)0;
     }
@@ -48,7 +49,7 @@ pid_t list_remove(list_t *list, pid_t item) {
 
     linked_node_t *actual = list->head;
     while (actual != NULL) {
-        if (actual->value == item) {
+        if (actual->sid == sid) {
             if (!(actual == list->head)) { // not first
                 actual->next->previous = actual->previous;
             }
@@ -56,8 +57,8 @@ pid_t list_remove(list_t *list, pid_t item) {
                 actual->previous->next = actual->next;
             }
             free(actual);
-            printf("removed %d\n", item);
-            return item;
+            printf("removed %d\n", sid);
+            return sid;
         }
     }
     return (pid_t)0;
@@ -77,9 +78,9 @@ pid_t list_removeNode(list_t *list, linked_node_t *node) {
     if (!(node == list->tail)) { // not last
         node->previous->next = node->next;
     }
-    pid_t item = node->value;
+    pid_t sid = node->sid;
     free(node);
-    return item;
+    return sid;
 }
 
 pid_t list_pop(list_t *list) {
@@ -87,7 +88,7 @@ pid_t list_pop(list_t *list) {
         return (pid_t)0;
     }
 
-    pid_t holder = list->head->value;
+    pid_t holder = list->head->sid;
     linked_node_t *destroyMe = list->head;
     list->head = list->head->next;
     if (list->head == NULL) {
@@ -101,7 +102,7 @@ pid_t list_pop(list_t *list) {
 
 void list_print(list_t *list) {
     for (linked_node_t *current = list->head; current != NULL; current = current->next) {
-        printf("pid: %d\n", current->value);
+        printf("pid: %d\n", current->sid);
     }
     puts("");
 }
@@ -110,7 +111,7 @@ void list_destroy(list_t *list) {
     if (list != NULL) {
         while (list->head != NULL) {
             linked_node_t *freeMe = list->head;
-            printf("Freezand %d\n", freeMe->value);
+            printf("Freezand %d\n", freeMe->sid);
             list->head = list->head->next;
             free(freeMe);
         }
@@ -123,7 +124,7 @@ void list_runOnAll(list_t *list, void (*visit)(linked_node_t *)) {
         linked_node_t *useMe = list->head;
         while (useMe != NULL) {
             linked_node_t *useMeNext = useMe->next;
-            printf("Visitando nó %d\n", useMe->value);
+            printf("Visitando nó %d\n", useMe->sid);
             visit(useMe);
             useMe = useMeNext;
         }
