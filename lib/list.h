@@ -26,6 +26,8 @@ void list_print(list_t* stack);
 
 pid_t list_remove(list_t* list, pid_t item);
 
+pid_t list_removeNode(list_t *list, linked_node_t *node);
+
 void list_destroy(list_t* list);
 
 void list_runOnAll(list_t* list, void (*visit)(linked_node_t*));

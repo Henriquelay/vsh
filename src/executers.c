@@ -2,17 +2,23 @@
 
 static list_t *SIDs = NULL;
 
-void waitSupervisors() {
-    // Tive que comentar pois esse wait estava dando halt no programa
-    // pid_t waited = wait(NULL);
-    // list_remove(SIDs, getsid(waited));
-}
-
 void killpgList(linked_node_t *SID) {
     printf("Sending sig to gid %d\n", SID->value);
     if (killpg(SID->value, SIGKILL) != 0) {
         perror("Killpg failed");
         exit(EXIT_FAILURE);
+    }
+}
+
+void waitSupervisors() {
+    linked_node_t *actual = SIDs->head;
+    while(actual != NULL) {
+        linked_node_t *node = actual;
+        actual = actual->next;
+        if(waitpid(node->value, NULL, WNOHANG) > 0){
+            killpgList(node);
+            list_removeNode(SIDs, node);
+        }
     }
 }
 

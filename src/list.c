@@ -63,6 +63,25 @@ pid_t list_remove(list_t *list, pid_t item) {
     return (pid_t)0;
 }
 
+pid_t list_removeNode(list_t *list, linked_node_t *node) {
+    if (list == NULL) {
+        return (pid_t)0;
+    }
+    if (list_isEmpty(list)) {
+        return (pid_t)0;
+    }
+
+    if (!(node == list->head)) { // not first
+        node->next->previous = node->previous;
+    }
+    if (!(node == list->tail)) { // not last
+        node->previous->next = node->next;
+    }
+    pid_t item = node->value;
+    free(node);
+    return item;
+}
+
 pid_t list_pop(list_t *list) {
     if (list->head == NULL) {
         return (pid_t)0;
