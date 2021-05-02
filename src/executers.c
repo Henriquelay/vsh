@@ -51,11 +51,11 @@ int execIfBultin(command_t *command) {
             printf("liberamoita");
             exit(0);
         case 'a': // "armageddon"
-        // TODO não está botando o SID na lista
-        // FIXME
+                  // TODO não está botando o SID na lista
+                  // FIXME
             printf("It's the end...\n");
             printf("List:\n");
-            printf("%p\n", (void*) SIDs->head);
+            printf("%p\n", (void *)SIDs->head);
             list_print(SIDs);
             list_runOnAll(SIDs, killpgList);
             list_destroy(SIDs);
@@ -95,10 +95,15 @@ void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
  *          A B C
  * Supervisor is kept to receive signals and treat the group os process
  * */
-void execPiped(commandLine_t *commandLine) {
+void execPiped(commandLine_t *commandLine, int fileDescriptor) {
     // Changing to new Session
     pid_t sid = setsid();
-    list_push(SIDs, sid);
+    printf("SID from supervisor: %d\n", sid);
+    if (write(fileDescriptor, &sid, sizeof(sid)) == -1) {
+        perror("Erro writing on pipe");
+        exit(EXIT_FAILURE);
+    };
+    close(fileDescriptor);
     // Initializin chidren's pipes
     pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
@@ -148,7 +153,10 @@ void execPiped(commandLine_t *commandLine) {
         waitpid(pidArray[i], &status, 0);
     }
     freeCommandLine(commandLine);
-    // TODO: Raise SIGUSR1 or SIGUSR2 if returned on `signal`
+    // TODO: Raise SIGUSR1 or SIGUSR2 kills background processes
+    // And all brother processes
+    // Install SIGUSR1 and SIGUSR2 handler that kills all supervisor children
+    // Install SIGUSR1 and SIGUSR2 handler on children that sends SIGUSR1 or SIGUSR2 to supervisor
 
     kill(getppid(), SIG_WAIT);
     printf("Supervisor out! Bye!\n");
@@ -168,6 +176,13 @@ pid_t execCommandLine(commandLine_t *commandLine) {
     if (SIDs == NULL) {
         SIDs = list_init();
     }
+    int fd[2];
+    if (commandLine->commandc != 1) { // Piped commands
+        if (pipe(fd) != 0) {
+            perror("Error on pipe to supervisor");
+            exit(EXIT_FAILURE);
+        }
+    }
     pid_t childpid = fork();
     if (childpid == -1) {
         perror("Failed to fork. Exiting\n");
@@ -178,7 +193,8 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // "Supervisor" becomes the process who runs the command itself
             execSingle(commandLine->command[0]);
         } else { // Piped commands
-            execPiped(commandLine);
+            close(fd[STDIN_FILENO]);
+            execPiped(commandLine, fd[STDOUT_FILENO]);
         }
 
     } else {                              // vsh's code
@@ -186,6 +202,17 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
+            close(fd[STDOUT_FILENO]);
+            // Read from pipe
+            pid_t SID;
+            if (read(fd[STDIN_FILENO], &SID, sizeof(SID)) < 1) {
+                perror("Error reading from pipe");
+                exit(EXIT_FAILURE);
+            };
+            printf("SID do supervisor sendo printado do pai: %d\n", SID);
+            close(fd[STDIN_FILENO]);
+
+            list_push(SIDs, SID);
         }
     }
 
