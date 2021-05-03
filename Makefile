@@ -1,3 +1,8 @@
+# Integrantes do grupo
+# Bruno Gomes de Azevedo
+# Henrique Coutinho Layber
+# Davi de Souza Petris
+
 TARGET_EXEC ?= vsh
 
 BUILD_DIR ?= .
