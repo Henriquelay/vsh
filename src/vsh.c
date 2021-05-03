@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     
 
     // Waiter on signals to prevent zombies
-    installWaiter();
+    // installWaiter();
 
     // To reuse between input reads
     char linebuffer[BUFFERSIZE];

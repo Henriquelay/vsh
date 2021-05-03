@@ -42,17 +42,29 @@ int isBuiltin(command_t *command) {
     return commandNumber;
 }
 
+void waitProcessOfGroups(linked_node_t *SID) {
+    /*
+    The waitpid() system call suspends execution of the calling thread until a child specified by pid argument has changed state.  By default, waitpid() waits only for terminated children, but this behavior is modifiable via  the options argument, as described below.
+
+    The value of pid can be:
+
+    < -1   meaning wait for any child process whose process group ID is equal to the absolute value of pid.
+    */
+    waitpid(-(SID->value), NULL, WNOHANG);
+}
+
 int execIfBultin(command_t *command) {
     int builtinValue = isBuiltin(command);
     if (builtinValue) {
         switch (command->commandName[0]) {
-        // TODO
         case 'l': // "liberamoita"
-            printf("liberamoita");
-            exit(0);
+            printf("liberamoita...\n");
+            list_runOnAll(SIDs, waitProcessOfGroups);
+            return 1;
+            // exit(0);
         case 'a': // "armageddon"
-                  // TODO não está botando o SID na lista
-                  // FIXME
+            // TODO não está botando o SID na lista
+            // FIXME
             printf("It's the end...\n");
             printf("List:\n");
             printf("%p\n", (void *)SIDs->head);
@@ -158,7 +170,7 @@ void execPiped(commandLine_t *commandLine, int fileDescriptor) {
     // Install SIGUSR1 and SIGUSR2 handler that kills all supervisor children
     // Install SIGUSR1 and SIGUSR2 handler on children that sends SIGUSR1 or SIGUSR2 to supervisor
 
-    kill(getppid(), SIG_WAIT);
+    // kill(getppid(), SIG_WAIT);
     printf("Supervisor out! Bye!\n");
     exit(EXIT_SUCCESS);
 }
