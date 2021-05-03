@@ -5,10 +5,7 @@ void jacarezin(int sig) {
 }
 
 void corongaHandler(int sig) {
-    // pid_t supervisor_pid = getppid();
-    // kill(supervisor_pid, SIGRTMIN + 1);
-    printf("Corongando caralho fodase\n");
-    kill(getppid(), sig);
+    killpg(getsid(0), SIGKILL);
 }
 
 void defaultBlockMask(sigset_t *mask) {
