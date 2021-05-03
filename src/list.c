@@ -104,7 +104,6 @@ void list_runOnAll(list_t *list, void (*visit)(linked_node_t *)) {
         linked_node_t *useMe = list->head;
         while (useMe != NULL) {
             linked_node_t *useMeNext = useMe->next;
-            printf("Visitando nó %d\n", useMe->value);
             visit(useMe);
             useMe = useMeNext;
         }

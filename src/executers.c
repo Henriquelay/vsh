@@ -5,7 +5,6 @@ static list_t *SIDs = NULL;
 void killpgList(linked_node_t *SID) {
     // printf("Sending sig to gid %d\n", SID->value);
     if (killpg(SID->value, SIGKILL) != 0) {
-        perror("Killpg failed");
         exit(EXIT_FAILURE);
     }
 }
