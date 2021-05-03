@@ -4,7 +4,7 @@
 #ifndef _VSH_SIGNALS_H_
 #define _VSH_SIGNALS_H_
 
-#define SIG_WAIT (SIGRTMIN+2)
+#define SIG_WAIT (SIGRTMIN + 2)
 
 #include <signal.h>
 #include <stdio.h>

@@ -5,14 +5,14 @@
 #ifndef _VSH_EXECUTERS_H_
 #define _VSH_EXECUTERS_H_
 
+#include "../lib/list.h"
 #include "../lib/parser.h"
 #include "../lib/signals.h"
-#include "../lib/list.h"
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>

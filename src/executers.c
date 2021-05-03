@@ -153,12 +153,11 @@ void execPiped(commandLine_t *commandLine, int fileDescriptor) {
     // Supervisor waits for last child to finish, so it won't exit if a child is running
     int status;
     for (unsigned int i = 0; i < commandLine->commandc; i++) {
-        if(waitpid(pidArray[i], &status, WIFSIGNALED(status))) { // If finished by signal
+        if (waitpid(pidArray[i], &status, WIFSIGNALED(status))) { // If finished by signal
             if (WTERMSIG(status) == SIGUSR1 || WTERMSIG(status) == SIGUSR2) {
                 killpg(sid, SIGKILL);
             }
         };
-        
     }
     freeCommandLine(commandLine);
     // printf("Supervisor out! Bye!\n");
