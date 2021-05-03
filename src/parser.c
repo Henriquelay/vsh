@@ -91,6 +91,7 @@ commandLine_t *parseLine(char *wholeLine, size_t lineSize) {
         if (len > 0 && wholeLine[len - 1] == '\n') {
             wholeLine[--len] = '\0';
         }
+    // TODO bug when EOF is first char (CTRL + D)
     } while (wholeLine[0] == '\0');
 
     commandLine_t *commandLine = initCommandLine();
