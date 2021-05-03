@@ -125,6 +125,7 @@ void execPiped(commandLine_t *commandLine, int fileDescriptor) {
             exit(EXIT_FAILURE);
         }
     }
+    // TODO install handler to USR1 & USR2
     for (int i = 0; i < commandLine->commandc; i++) {
         command_t *command = commandLine->command[i];
         // Pipe is accesible on parent and child
@@ -162,15 +163,14 @@ void execPiped(commandLine_t *commandLine, int fileDescriptor) {
     // Supervisor waits for last child to finish, so it won't exit if a child is running
     int status;
     for (unsigned int i = 0; i < commandLine->commandc; i++) {
-        waitpid(pidArray[i], &status, 0);
+        if(waitpid(pidArray[i], &status, WIFSIGNALED(status))) { // If finished by signal
+            if (WTERMSIG(status) == SIGUSR1 || WTERMSIG(status) == SIGUSR2) {
+                killpg(sid, SIGKILL);
+            }
+        };
+        
     }
     freeCommandLine(commandLine);
-    // TODO: Raise SIGUSR1 or SIGUSR2 kills background processes
-    // And all brother processes
-    // Install SIGUSR1 and SIGUSR2 handler that kills all supervisor children
-    // Install SIGUSR1 and SIGUSR2 handler on children that sends SIGUSR1 or SIGUSR2 to supervisor
-
-    // kill(getppid(), SIG_WAIT);
     printf("Supervisor out! Bye!\n");
     exit(EXIT_SUCCESS);
 }
@@ -206,6 +206,8 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             execSingle(commandLine->command[0]);
         } else { // Piped commands
             close(fd[STDIN_FILENO]);
+            // Background proccess tried to take a medication, in chances of getting immunized
+            takeCloroquina();
             execPiped(commandLine, fd[STDOUT_FILENO]);
         }
 

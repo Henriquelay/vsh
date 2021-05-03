@@ -1,19 +1,14 @@
 #include "../lib/signals.h"
 
 void jacarezin(int sig) {
-    printf("	   _  _\n");
-    printf(" _ _      (0)(0)-._  _.-'^^'^^'^^'^^'^^'--. \n");
-    printf("(.(.)----'`        ^^'                /^   ^^-._ \n");
-    printf("(    `                 \\             |    _    ^^-._ \n");
-    printf("VvvvvvvVv~~`__,/.._>  /:/:/:/:/:/:/:/\\  (_..,______^^-. \n");
-    printf("`^^^^^^^^`/  /   /  /`^^^^^^^^^>^^>^`>  >        _`)  ) \n");
-    printf("         (((`   (((`          (((`  (((`        `'--'^ \n");
-    printf("I feel weird... \n");
+    printf("	   _  _\n _ _      (0)(0)-._  _.-'^^'^^'^^'^^'^^'--. \n(.(.)----'`        ^^'                /^   ^^-._ \n(    `                 \\             |    _    ^^-._ \nVvvvvvvVv~~`__,/.._>  /:/:/:/:/:/:/:/\\  (_..,______^^-. \n`^^^^^^^^`/  /   /  /`^^^^^^^^^>^^>^`>  >        _`)  ) \n         (((`   (((`          (((`  (((`        `'--'^ \nI feel weird... \n");
 }
 
 void corongaHandler(int sig) {
-    pid_t supervisor_pid = getppid();
-    kill(supervisor_pid, SIGRTMIN + 1);
+    // pid_t supervisor_pid = getppid();
+    // kill(supervisor_pid, SIGRTMIN + 1);
+    printf("Corongando caralho fodase\n");
+    kill(getppid(), sig);
 }
 
 void defaultBlockMask(sigset_t *mask) {
@@ -48,11 +43,11 @@ void takeVaChina() {
     sigstruct.sa_flags = 0;
 
     if (sigaction(SIGUSR1, &sigstruct, 0) == -1) {
-        perror("Error installing sigaction\n");
+        perror("Error installing sigaction USR1\n");
         exit(EXIT_FAILURE);
     }
     if (sigaction(SIGUSR2, &sigstruct, 0) == -1) {
-        perror("Error installing sigaction\n");
+        perror("Error installing sigaction USR2\n");
         exit(EXIT_FAILURE);
     }
 }
@@ -63,5 +58,21 @@ void waitHandler(int sig) {
 }
 
 void takeCloroquina() {
-    // setSigAction(sigstruct, mask, coronga);
+    sigset_t bloqmask;
+
+    sigemptyset(&bloqmask);
+
+    struct sigaction sigstruct;
+    sigstruct.sa_mask = bloqmask;
+    sigstruct.sa_handler = corongaHandler;
+    sigstruct.sa_flags = 0;
+
+    if (sigaction(SIGUSR1, &sigstruct, 0) == -1) {
+        perror("Error installing sigaction USR1\n");
+        exit(EXIT_FAILURE);
+    }
+    if (sigaction(SIGUSR2, &sigstruct, 0) == -1) {
+        perror("Error installing sigaction USR2\n");
+        exit(EXIT_FAILURE);
+    }
 }

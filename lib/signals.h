@@ -17,8 +17,6 @@
 
 void takeVaChina();
 
-void installWaiter();
-
 void takeCloroquina();
 
 #endif
