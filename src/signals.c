@@ -5,6 +5,7 @@ void jacarezin(int sig) {
 }
 
 void corongaHandler(int sig) {
+    // printf("Corongando caralho fodase\n");
     killpg(getsid(0), SIGKILL);
 }
 
@@ -47,11 +48,6 @@ void takeVaChina() {
         perror("Error installing sigaction USR2\n");
         exit(EXIT_FAILURE);
     }
-}
-
-void waitHandler(int sig) {
-    printf("A supervisor finished. Waiting for all supervisors:\n");
-    waitSupervisors();
 }
 
 void takeCloroquina() {

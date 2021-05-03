@@ -17,18 +17,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-// int execSingle(command_t *command);
-
-// int execPiped(commandLine_t *commands);
-
-// int execBultin(command_t *command);
-
-// void wait_Supervisor(linked_node_t *supervisor);
-
-void waitSupervisors();
-
 int execCommandLine(commandLine_t *commands);
-
-// int commandCheck(command_t *command);
 
 #endif

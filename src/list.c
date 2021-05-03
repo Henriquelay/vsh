@@ -56,7 +56,7 @@ pid_t list_remove(list_t *list, pid_t item) {
                 actual->previous->next = actual->next;
             }
             free(actual);
-            printf("removed %d\n", item);
+            // printf("removed %d\n", item);
             return item;
         }
     }
@@ -91,7 +91,7 @@ void list_destroy(list_t *list) {
     if (list != NULL) {
         while (list->head != NULL) {
             linked_node_t *freeMe = list->head;
-            printf("Freezand %d\n", freeMe->value);
+            // printf("Freezand %d\n", freeMe->value);
             list->head = list->head->next;
             free(freeMe);
         }

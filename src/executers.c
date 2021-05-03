@@ -2,13 +2,8 @@
 
 static list_t *SIDs = NULL;
 
-void waitSupervisors() {
-    pid_t waited = wait(NULL);
-    list_remove(SIDs, getsid(waited));
-}
-
 void killpgList(linked_node_t *SID) {
-    printf("Sending sig to gid %d\n", SID->value);
+    // printf("Sending sig to gid %d\n", SID->value);
     if (killpg(SID->value, SIGKILL) != 0) {
         perror("Killpg failed");
         exit(EXIT_FAILURE);
@@ -63,20 +58,15 @@ int execIfBultin(command_t *command) {
             return 1;
             // exit(0);
         case 'a': // "armageddon"
-            // TODO não está botando o SID na lista
-            // FIXME
             printf("It's the end...\n");
-            printf("List:\n");
-            printf("%p\n", (void *)SIDs->head);
-            list_print(SIDs);
+            // printf("List:\n");
+            // printf("%p\n", (void *)SIDs->head);
+            // list_print(SIDs);
             list_runOnAll(SIDs, killpgList);
             list_destroy(SIDs);
             exit(0);
         case 'e': // "exit"
             exit(0);
-        case 'w': // "wait"
-            waitSupervisors();
-            return 1;
         }
     }
     return 0;
@@ -110,7 +100,7 @@ void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
 void execPiped(commandLine_t *commandLine, int fileDescriptor) {
     // Changing to new Session
     pid_t sid = setsid();
-    printf("SID from supervisor: %d\n", sid);
+    // printf("SID from supervisor: %d\n", sid);
     if (write(fileDescriptor, &sid, sizeof(sid)) == -1) {
         perror("Erro writing on pipe");
         exit(EXIT_FAILURE);
@@ -171,7 +161,7 @@ void execPiped(commandLine_t *commandLine, int fileDescriptor) {
         
     }
     freeCommandLine(commandLine);
-    printf("Supervisor out! Bye!\n");
+    // printf("Supervisor out! Bye!\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -223,7 +213,7 @@ pid_t execCommandLine(commandLine_t *commandLine) {
                 perror("Error reading from pipe");
                 exit(EXIT_FAILURE);
             };
-            printf("SID do supervisor sendo printado do pai: %d\n", SID);
+            // printf("SID do supervisor sendo printado do pai: %d\n", SID);
             close(fd[STDIN_FILENO]);
 
             list_push(SIDs, SID);
