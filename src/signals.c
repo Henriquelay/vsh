@@ -1,17 +1,17 @@
 #include "../lib/signals.h"
 
 void jacarezin(int sig) {
-    printf("		   _  _\n");
+    printf("	   _  _\n");
     printf(" _ _      (0)(0)-._  _.-'^^'^^'^^'^^'^^'--. \n");
-    printf("(.(.)----'`        ^^'       /^   ^^-._ \n");
+    printf("(.(.)----'`        ^^'                /^   ^^-._ \n");
     printf("(    `                 \\             |    _    ^^-._ \n");
     printf("VvvvvvvVv~~`__,/.._>  /:/:/:/:/:/:/:/\\  (_..,______^^-. \n");
     printf("`^^^^^^^^`/  /   /  /`^^^^^^^^^>^^>^`>  >        _`)  ) \n");
-    printf("		(((`   (((`          (((`  (((`        `'--'^ \n");
+    printf("         (((`   (((`          (((`  (((`        `'--'^ \n");
     printf("I feel weird... \n");
 }
 
-void coronga(int sig) {
+void corongaHandler(int sig) {
     pid_t supervisor_pid = getppid();
     kill(supervisor_pid, SIGRTMIN + 1);
 }
@@ -36,9 +36,6 @@ void defaultBlockMask(sigset_t *mask) {
         exit(EXIT_FAILURE);
     }
 }
-
-// void setSigAction(struct sigaction *sigstruct, sigset_t *mask, void (*handler)(int)) {
-// }
 
 void takeVaChina() {
     sigset_t bloqmask;
@@ -65,22 +62,6 @@ void waitHandler(int sig) {
     waitSupervisors();
 }
 
-void installWaiter() {
-    sigset_t bloqmask;
-
-    defaultBlockMask(&bloqmask);
-
-    struct sigaction sigstruct;
-    sigstruct.sa_mask = bloqmask;
-    sigstruct.sa_handler = waitHandler;
-    sigstruct.sa_flags = 0;
-
-    if (sigaction(SIG_WAIT, &sigstruct, 0) == -1) {
-        perror("Error installing sigaction\n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void cloroquinaAction(struct sigaction *sigstruct, sigset_t *mask) {
+void takeCloroquina() {
     // setSigAction(sigstruct, mask, coronga);
 }

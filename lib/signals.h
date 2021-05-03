@@ -15,14 +15,10 @@
 
 #include "./executers.h"
 
-// void defaultBlockMask(sigset_t *blockmask);
-
-// void setSigAction(struct sigaction *sigstruct, sigset_t *mask, void (*handler)(int));
-
 void takeVaChina();
 
 void installWaiter();
 
-void cloroquinaAction(struct sigaction *sigstruct, sigset_t *mask);
+void takeCloroquina();
 
 #endif
