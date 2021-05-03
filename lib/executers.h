@@ -2,20 +2,21 @@
 * This library is for executing commands
 **/
 
-#include "../lib/parser.h"
-
-
 #ifndef _VSH_EXECUTERS_H_
 #define _VSH_EXECUTERS_H_
 
-// int execSingle(command_t *command);
+#include "../lib/list.h"
+#include "../lib/parser.h"
+#include "../lib/signals.h"
 
-// int execPiped(commandLine_t *commands);
-
-// int execBultin(command_t *command);
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 int execCommandLine(commandLine_t *commands);
-
-// int commandCheck(command_t *command);
 
 #endif

@@ -1,10 +1,10 @@
+#include "../lib/parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include "../lib/parser.h"
+#include <unistd.h>
 
 void freeCommand(command_t *c) {
     c->commandName = NULL;

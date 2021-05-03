@@ -1,11 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 #include "../lib/executers.h"
 
+static list_t *SIDs = NULL;
+
+void killpgList(linked_node_t *SID) {
+    // printf("Sending sig to gid %d\n", SID->value);
+    if (killpg(SID->value, SIGKILL) != 0) {
+        perror("Killpg failed");
+        exit(EXIT_FAILURE);
+    }
+}
 
 int commandLineCheck(commandLine_t *commandLine) {
     if (commandLine != NULL) {
@@ -24,9 +27,9 @@ int commandLineCheck(commandLine_t *commandLine) {
 }
 
 int isBuiltin(command_t *command) {
-    const char *builtinCommands[] = {"liberamoita", "armageddon"};
+    const char *builtinCommands[] = {"liberamoita", "armageddon", "exit", "wait"};
     int commandNumber = 0;
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 4; i++) {
         if (!strcmp(builtinCommands[i], command->commandName)) {
             commandNumber = i + 1;
         }
@@ -34,25 +37,43 @@ int isBuiltin(command_t *command) {
     return commandNumber;
 }
 
-void execIfBultin(command_t *command) {
+void waitProcessOfGroups(linked_node_t *SID) {
+    /*
+    The waitpid() system call suspends execution of the calling thread until a child specified by pid argument has changed state.  By default, waitpid() waits only for terminated children, but this behavior is modifiable via  the options argument, as described below.
+
+    The value of pid can be:
+
+    < -1   meaning wait for any child process whose process group ID is equal to the absolute value of pid.
+    */
+    waitpid(-(SID->value), NULL, WNOHANG);
+}
+
+int execIfBultin(command_t *command) {
     int builtinValue = isBuiltin(command);
     if (builtinValue) {
         switch (command->commandName[0]) {
-        // TODO
         case 'l': // "liberamoita"
-            printf("liberamoita");
-            exit(0);
-            break;
+            printf("liberamoita...\n");
+            list_runOnAll(SIDs, waitProcessOfGroups);
+            return 1;
+            // exit(0);
         case 'a': // "armageddon"
-            printf("armageddon");
+            printf("It's the end...\n");
+            // printf("List:\n");
+            // printf("%p\n", (void *)SIDs->head);
+            // list_print(SIDs);
+            list_runOnAll(SIDs, killpgList);
+            list_destroy(SIDs);
             exit(0);
-            break;
+        case 'e': // "exit"
+            exit(0);
         }
     }
+    return 0;
 }
 
 void execSingle(command_t *command) {
-    execIfBultin(command);
+    // execIfBultin(command);
     if (execvp(command->commandName, command->argument) == -1) {
         perror("Error executing command");
         printf("Could not execute command: (%s)\n", command->commandName);
@@ -76,9 +97,15 @@ void closePipes(int pipes[][2], unsigned int pipesCount, unsigned int desc) {
  *          A B C
  * Supervisor is kept to receive signals and treat the group os process
  * */
-void execPiped(commandLine_t *commandLine) {
-    // Seting SV to another session
-    setsid();
+void execPiped(commandLine_t *commandLine, int fileDescriptor) {
+    // Changing to new Session
+    pid_t sid = setsid();
+    // printf("SID from supervisor: %d\n", sid);
+    if (write(fileDescriptor, &sid, sizeof(sid)) == -1) {
+        perror("Erro writing on pipe");
+        exit(EXIT_FAILURE);
+    };
+    close(fileDescriptor);
     // Initializin chidren's pipes
     pid_t pidArray[commandLine->commandc];
     int pipes[commandLine->commandc - 1][2];
@@ -88,6 +115,7 @@ void execPiped(commandLine_t *commandLine) {
             exit(EXIT_FAILURE);
         }
     }
+    // TODO install handler to USR1 & USR2
     for (int i = 0; i < commandLine->commandc; i++) {
         command_t *command = commandLine->command[i];
         // Pipe is accesible on parent and child
@@ -119,16 +147,20 @@ void execPiped(commandLine_t *commandLine) {
         }
     }
 
-    freeCommandLine(commandLine);
     closePipes(pipes, commandLine->commandc - 1, 0);
     closePipes(pipes, commandLine->commandc - 1, 1);
+
     // Supervisor waits for last child to finish, so it won't exit if a child is running
     int status;
     for (unsigned int i = 0; i < commandLine->commandc; i++) {
-        waitpid(pidArray[i], &status, 0);
+        if (waitpid(pidArray[i], &status, WIFSIGNALED(status))) { // If finished by signal
+            if (WTERMSIG(status) == SIGUSR1 || WTERMSIG(status) == SIGUSR2) {
+                killpg(sid, SIGKILL);
+            }
+        };
     }
-    // TODO: Raise SIGUSR1 or SIGUSR2 if returned on `signal`
-    // TODO: Raise "finished" signal to main before exiting, so it can run waiting routine
+    freeCommandLine(commandLine);
+    // printf("Supervisor out! Bye!\n");
     exit(EXIT_SUCCESS);
 }
 
@@ -138,6 +170,20 @@ pid_t execCommandLine(commandLine_t *commandLine) {
         return 1;
     }
 
+    if (execIfBultin(commandLine->command[0]) > 0) {
+        return 0;
+    };
+
+    if (SIDs == NULL) {
+        SIDs = list_init();
+    }
+    int fd[2];
+    if (commandLine->commandc != 1) { // Piped commands
+        if (pipe(fd) != 0) {
+            perror("Error on pipe to supervisor");
+            exit(EXIT_FAILURE);
+        }
+    }
     pid_t childpid = fork();
     if (childpid == -1) {
         perror("Failed to fork. Exiting\n");
@@ -148,16 +194,28 @@ pid_t execCommandLine(commandLine_t *commandLine) {
             // "Supervisor" becomes the process who runs the command itself
             execSingle(commandLine->command[0]);
         } else { // Piped commands
-            execPiped(commandLine);
+            close(fd[STDIN_FILENO]);
+            // Background proccess tried to take a medication, in chances of getting immunized
+            takeCloroquina();
+            execPiped(commandLine, fd[STDOUT_FILENO]);
         }
 
-    } else { // vsh's code
+    } else {                              // vsh's code
         if (commandLine->commandc == 1) { // Single command
             // Wait for command to finish
             waitpid(childpid, NULL, 0);
         } else { // Piped commands
-            waitpid(childpid, NULL, WNOHANG);
-            // TODO place PID in waitlist if waiting fails
+            close(fd[STDOUT_FILENO]);
+            // Read from pipe
+            pid_t SID;
+            if (read(fd[STDIN_FILENO], &SID, sizeof(SID)) < 1) {
+                perror("Error reading from pipe");
+                exit(EXIT_FAILURE);
+            };
+            // printf("SID do supervisor sendo printado do pai: %d\n", SID);
+            close(fd[STDIN_FILENO]);
+
+            list_push(SIDs, SID);
         }
     }
 
