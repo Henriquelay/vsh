@@ -5,38 +5,36 @@ void jacarezin(int sig) {
 }
 
 void corongaHandler(int sig) {
-    // printf("Corongando caralho fodase\n");
+    // printf("Corongando\n");
     killpg(getsid(0), SIGKILL);
 }
 
-void defaultBlockMask(sigset_t *mask) {
+sigset_t blockKeyboardSignals() {
+    sigset_t bloqmask;
     // a mascara criada como vazia
-    if (sigemptyset(mask) == -1) {
+    if (sigemptyset(&bloqmask) == -1) {
         perror("Error on block mask creation\n");
     }
 
     // adicionando os sinais que precisam ser bloqueados na mascara 1
-    if (sigaddset(mask, SIGINT) == -1) {
+    if (sigaddset(&bloqmask, SIGINT) == -1) {
         perror("Error on add SIGINT to mask\n");
         exit(EXIT_FAILURE);
     }
-    if (sigaddset(mask, SIGTSTP) == -1) {
+    if (sigaddset(&bloqmask, SIGTSTP) == -1) {
         perror("Error on add SIGSTP to mask\n");
         exit(EXIT_FAILURE);
     }
-    if (sigaddset(mask, SIGQUIT) == -1) {
+    if (sigaddset(&bloqmask, SIGQUIT) == -1) {
         perror("Error on add SIGQUIT to mask\n");
         exit(EXIT_FAILURE);
     }
+    return bloqmask;
 }
 
 void takeVaChina() {
-    sigset_t bloqmask;
-
-    defaultBlockMask(&bloqmask);
-
     struct sigaction sigstruct;
-    sigstruct.sa_mask = bloqmask;
+    sigstruct.sa_mask = blockKeyboardSignals();
     sigstruct.sa_handler = jacarezin;
     sigstruct.sa_flags = 0;
 

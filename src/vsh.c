@@ -5,7 +5,6 @@
 int main(int argc, char *argv[]) {
     // Vsh has been imunized by a weird immunoagent from the east
     takeVaChina();
-    
 
     // Waiter on signals to prevent zombies
     // installWaiter();
